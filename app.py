@@ -33,6 +33,7 @@ df.rename(
     },
     inplace=True,
 )
+df = df[df.Country != "World"]
 country_list = list(df["Country"].value_counts().sort_index().index)
 year_list = list(df["Year"].value_counts().sort_index().index)
 
@@ -43,14 +44,15 @@ server = app.server
 app.title = tabtitle
 
 ########### Create Figure
-'''World Chloropleth Map'''
+"""World Chloropleth Map"""
+
 
 def getFig(value):
     fig = go.Figure(
         data=go.Choropleth(
-            locations=df["Country Code"],
-            z=df["Annual_CO2_Emissions"],
-            text=df["Country"],
+            locations=df.loc[df["Year"] == value]["Country Code"],
+            z=df.loc[df["Year"] == value]["Annual_CO2_Emissions"],
+            text=df.loc[df["Year"] == value]["Country"],
             colorscale="RdYlBu",
             autocolorscale=False,
             reversescale=True,
@@ -63,7 +65,9 @@ def getFig(value):
 
     fig.update_layout(
         title_text="Annual CO2 Emissions",
-        geo=dict(showframe=False, showcoastlines=False, projection_type="equirectangular"),
+        geo=dict(
+            showframe=False, showcoastlines=False, projection_type="equirectangular"
+        ),
         annotations=[
             dict(
                 x=0.55,
@@ -79,36 +83,37 @@ def getFig(value):
 
     return fig
 
+
 ############ Create Layout
 
-date_list = ['1900', '1920', '194', '2013', '2014', '2015', '2016', '2017']
-date_mark = {i: date_list[i] for i in range (0,8)}
+date_list = [str(each_year) for each_year in range(1900, 2018)]
+date_mark = {int(date_list[i]): date_list[i] for i in range(0, len(date_list), 10)}
 
 
 # Dropdown
-app.layout = html.Div([
-    html.H3('Select a Year'),
-    dcc.RangeSlider(
-        id='year-slider',
-        min = 0,
-        max = 7,
-        step = None,
-        #marks = [{'label': i, 'value': i} for i in year_list],
-        marks = date_mark,
-        value = [3, 4]
-    ),
-    html.Br(),
-    dcc.Graph(id='world-map'),
-    html.A('Code on Github', href=githublink),
-    html.Br(),
-    html.A("Data Source", href=sourceurl),
-])
+app.layout = html.Div(
+    [
+        html.H3("Select a Year"),
+        dcc.Slider(
+            id="year-slider",
+            min=int(date_list[0]),
+            max=int(date_list[-1]),
+            step=1,
+            # marks = [{'label': i, 'value': i} for i in year_list],
+            marks=date_mark,
+            value=2010,
+        ),
+        html.Br(),
+        dcc.Graph(id="world-map"),
+        html.A("Code on Github", href=githublink),
+        html.Br(),
+        html.A("Data Source", href=sourceurl),
+    ]
+)
 
 
 ############ Callbacks
-
-@app.callback(Output('world-map', 'figure'),
-             [Input('year-slider', 'value')])
+@app.callback(Output("world-map", "figure"), [Input("year-slider", "value")])
 def updateFigWith(value):
     return getFig(value)
 
