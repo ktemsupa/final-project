@@ -13,10 +13,10 @@ tabtitle = "CO2 Emissions"
 sourceurl = "http://www.globalcarbonatlas.org/en/CO2-emissions"
 githublink = "https://github.com/ktemsupa/final-project"
 capita = pd.read_csv(
-    "https://raw.githubusercontent.com/ktemsupa/final-project/tree/master/data/emissions_capita.csv"
+    "https://raw.githubusercontent.com/ktemsupa/final-project/master/data/emissions_capita.csv"
 )
 region = pd.read_csv(
-     "https://raw.githubusercontent.com/ktemsupa/final-project/tree/master/data/emissions_region.csv"
+    "https://raw.githubusercontent.com/ktemsupa/final-project/master/data/emissions_region.csv"
 )
 # Merge dataset
 df = pd.merge(capita, region)
@@ -100,7 +100,7 @@ app.layout = html.Div(
                     value=2010,
                 ),
                 html.Br(),
-                html.H6("Bottom Graph: Choose a Country:"),
+                html.H6("Bottom Graph: Choose a Country"),
                 dcc.Dropdown(
                     id="country-drop",
                     options=[{"label": i, "value": i} for i in country_list],
