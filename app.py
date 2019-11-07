@@ -6,7 +6,8 @@ from dash.dependencies import Input, Output, State
 import plotly.figure_factory as ff
 import pandas as pd
 
-### Functional World Map and Slider Attempt 1 ###
+### Functional World Map and Slider###
+#SUCCESS
 
 ########### Define the data
 
@@ -36,6 +37,8 @@ df.rename(
 df = df[df.Country != "World"]
 country_list = list(df["Country"].value_counts().sort_index().index)
 year_list = list(df["Year"].value_counts().sort_index().index)
+date_list = [str(each_year) for each_year in range(1900, 2018)]
+date_mark = {int(date_list[i]): date_list[i] for i in range(0, len(date_list), 10)}
 
 ########### Initiate the app
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
@@ -45,7 +48,6 @@ app.title = tabtitle
 
 ########### Create Figure
 """World Chloropleth Map"""
-
 
 def getFig(value):
     fig = go.Figure(
@@ -74,32 +76,23 @@ def getFig(value):
                 y=0.1,
                 xref="paper",
                 yref="paper",
-                text='Source: <a href="http://www.globalcarbonatlas.org/en/CO2-emissions">\
-                Global Carbon Atlas</a>',
-                showarrow=False,
             )
         ],
     )
 
     return fig
 
-
 ############ Create Layout
+"""Drop Down"""
 
-date_list = [str(each_year) for each_year in range(1900, 2018)]
-date_mark = {int(date_list[i]): date_list[i] for i in range(0, len(date_list), 10)}
-
-
-# Dropdown
 app.layout = html.Div(
     [
-        html.H3("Select a Year"),
+        html.H5("Select a Year"),
         dcc.Slider(
             id="year-slider",
             min=int(date_list[0]),
             max=int(date_list[-1]),
             step=1,
-            # marks = [{'label': i, 'value': i} for i in year_list],
             marks=date_mark,
             value=2010,
         ),
@@ -111,12 +104,10 @@ app.layout = html.Div(
     ]
 )
 
-
 ############ Callbacks
 @app.callback(Output("world-map", "figure"), [Input("year-slider", "value")])
 def updateFigWith(value):
     return getFig(value)
-
 
 ############ Deploy
 if __name__ == "__main__":
