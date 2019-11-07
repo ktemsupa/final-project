@@ -6,19 +6,17 @@ from dash.dependencies import Input, Output, State
 import plotly.figure_factory as ff
 import pandas as pd
 
-### Functional World Map and Slider###
-#SUCCESS
+# ########## Define the Data
 
-########### Define the data
-
+pagetitle = "CO2 Emissions"
 tabtitle = "CO2 Emissions"
 sourceurl = "http://www.globalcarbonatlas.org/en/CO2-emissions"
 githublink = "https://github.com/ktemsupa/final-project"
 capita = pd.read_csv(
-    "/Users/KimberlyElise/General_Assembly/newproject/final-project/data/emissions_capita.csv"
+    "https://raw.githubusercontent.com/ktemsupa/final-project/tree/master/data/emissions_capita.csv"
 )
 region = pd.read_csv(
-    "/Users/KimberlyElise/General_Assembly/newproject/final-project/data/emissions_region.csv"
+     "https://raw.githubusercontent.com/ktemsupa/final-project/tree/master/data/emissions_region.csv"
 )
 # Merge dataset
 df = pd.merge(capita, region)
@@ -36,18 +34,18 @@ df.rename(
 )
 df = df[df.Country != "World"]
 country_list = list(df["Country"].value_counts().sort_index().index)
-year_list = list(df["Year"].value_counts().sort_index().index)
 date_list = [str(each_year) for each_year in range(1900, 2018)]
 date_mark = {int(date_list[i]): date_list[i] for i in range(0, len(date_list), 10)}
 
-########### Initiate the app
+# ########## Initiate the App
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 server = app.server
 app.title = tabtitle
 
-########### Create Figure
+# ########## Create Figure
 """World Chloropleth Map"""
+
 
 def getFig(value):
     fig = go.Figure(
@@ -70,44 +68,112 @@ def getFig(value):
         geo=dict(
             showframe=False, showcoastlines=False, projection_type="equirectangular"
         ),
-        annotations=[
-            dict(
-                x=0.55,
-                y=0.1,
-                xref="paper",
-                yref="paper",
-            )
-        ],
+        annotations=[dict(x=0.55, y=0.1, xref="paper", yref="paper", showarrow=False,)],
     )
 
     return fig
 
-############ Create Layout
-"""Drop Down"""
 
+# ######### Layout
 app.layout = html.Div(
-    [
-        html.H5("Select a Year"),
-        dcc.Slider(
-            id="year-slider",
-            min=int(date_list[0]),
-            max=int(date_list[-1]),
-            step=1,
-            marks=date_mark,
-            value=2010,
+    children=[
+        html.H1(pagetitle),
+        html.Div(
+            [
+                dcc.Markdown(
+                    """
+            * China, the USA and 20 EU countries emit the most CO2.
+            """
+                )
+            ]
         ),
         html.Br(),
-        dcc.Graph(id="world-map"),
-        html.A("Code on Github", href=githublink),
-        html.Br(),
-        html.A("Data Source", href=sourceurl),
+        html.Div(
+            [
+                html.H6("Top Map: Select a Year"),
+                dcc.Slider(
+                    id="year-slider",
+                    min=int(date_list[0]),
+                    max=int(date_list[-1]),
+                    step=1,
+                    marks=date_mark,
+                    value=2010,
+                ),
+                html.Br(),
+                html.H6("Bottom Graph: Choose a Country:"),
+                dcc.Dropdown(
+                    id="country-drop",
+                    options=[{"label": i, "value": i} for i in country_list],
+                    value=country_list[0],
+                ),
+                html.Br(),
+                html.Div(
+                    [
+                        html.Div(
+                            dcc.Graph(id="world-map",),
+                            # style={"width": "45%"},
+                            # ßclassName="six columns",
+                        ),
+                        html.Div(
+                            dcc.Graph(id="line-graph",),
+                            # style={"width": "45%"},
+                            # className="six columns",
+                        ),
+                    ],
+                    className="row",
+                ),
+                html.Br(),
+                html.A("Code on Github", href=githublink),
+                html.Br(),
+                html.A("Data Source", href=sourceurl),
+            ]
+        ),
     ]
 )
 
-############ Callbacks
+# ######## Callback #1 #########
 @app.callback(Output("world-map", "figure"), [Input("year-slider", "value")])
 def updateFigWith(value):
     return getFig(value)
+
+
+# ######## Callback #2 #########
+
+
+@app.callback(
+    dash.dependencies.Output("line-graph", "figure"),
+    [dash.dependencies.Input("country-drop", "value")],
+)
+def getFigq(value):
+    fig = go.Figure()
+    #    df2 = df.loc(df["Country"] == value)["Per_Capita_CO2_Emissions"]
+    fig.add_trace(
+        go.Scatter(
+            x=list(df.Year),
+            y=list(df.loc[df["Country"] == value]["Per_Capita_CO2_Emissions"]),
+        )
+    )
+    fig.update_layout(title_text="Per Capita CO2 Emissions by Country")
+    # Add range slider
+    fig.update_layout(
+        xaxis=go.layout.XAxis(
+            rangeselector=dict(
+                buttons=list(
+                    [
+                        dict(count=1, label="1m", step="month", stepmode="backward"),
+                        dict(count=6, label="6m", step="month", stepmode="backward"),
+                        dict(count=1, label="YTD", step="year", stepmode="todate"),
+                        dict(count=1, label="1y", step="year", stepmode="backward"),
+                        dict(step="all"),
+                    ]
+                )
+            ),
+            rangeslider=dict(visible=True),
+            type="date",
+        )
+    )
+    return fig
+
 
 ############ Deploy
 if __name__ == "__main__":
